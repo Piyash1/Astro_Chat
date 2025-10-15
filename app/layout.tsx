@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AstroChat",
   description: "A modern real-time chat application built with Django REST Framework and Next.js. Connect, communicate, and collaborate in real-time.",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
