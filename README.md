@@ -242,7 +242,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**Your Name**
+**Moniruzzaman Piyash**
 - GitHub: [@Piyash1](https://github.com/Piyash1)
 - LinkedIn: [Moniruzzaman Piyash](https://www.linkedin.com/in/moniruzzamanpiyash/)
 
