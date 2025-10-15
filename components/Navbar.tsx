@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { useState } from "react";
@@ -31,8 +32,17 @@ export default function Navbar() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-xl font-semibold tracking-tight text-blue-700 hover:text-blue-800 transition-colors">
-              AstroChat
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Image
+                src="/logo.PNG"
+                alt="AstroChat Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8"
+              />
+              <span className="text-xl font-semibold tracking-tight text-blue-700">
+                AstroChat
+              </span>
             </Link>
             <div className="hidden md:flex items-center gap-1">
               <Link href="/" className={linkClass("/")}>Home</Link>

@@ -27,26 +27,32 @@ export default function GroupManagementModal({
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
   const [action, setAction] = useState<'add' | 'remove'>('add');
 
-  // Load users when modal opens
+  // Initialize modal when opened
   useEffect(() => {
     if (isOpen && conversation) {
-      loadUsers();
+      setUsers([]);
       setSelectedUsers([]);
+      setSearchTerm('');
       setError(null);
       setSuccess(null);
     }
   }, [isOpen, conversation]);
 
-  // Search users when search term changes
+  // Search users when search term changes (only if 2+ characters for add action)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (searchTerm.length > 0 || searchTerm.length === 0) {
+      if (action === 'add' && searchTerm.length >= 2) {
         loadUsers(searchTerm);
+      } else if (action === 'add' && searchTerm.length === 0) {
+        setUsers([]);
+      } else if (action === 'remove') {
+        // For remove action, show current members immediately
+        loadUsers();
       }
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, action]);
 
   const loadUsers = async (search?: string) => {
     if (!conversation) return;
@@ -54,9 +60,10 @@ export default function GroupManagementModal({
     try {
       setLoading(true);
       setError(null);
-      const data = await chatAPI.getUsers(search);
       
       if (action === 'add') {
+        // For add action, search users from API
+        const data = await chatAPI.getUsers(search);
         // Filter out current user and existing members
         const filteredUsers = data.filter(u => 
           u.id !== user?.id && 
@@ -162,6 +169,38 @@ export default function GroupManagementModal({
         )}
 
         <div className="flex-1 overflow-y-auto">
+          {/* Current Group Members */}
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              Group Members ({conversation.participants.length})
+            </h3>
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {conversation.participants.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center space-x-3 p-2 rounded-lg bg-gray-50"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                    {member.username[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {member.username}
+                      {member.id === conversation.created_by?.id && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                          Creator
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {member.email}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Action Toggle */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex space-x-2">
@@ -169,7 +208,8 @@ export default function GroupManagementModal({
                 onClick={() => {
                   setAction('add');
                   setSelectedUsers([]);
-                  loadUsers();
+                  setSearchTerm('');
+                  setUsers([]);
                 }}
                 className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                   action === 'add' 
@@ -183,7 +223,8 @@ export default function GroupManagementModal({
                 onClick={() => {
                   setAction('remove');
                   setSelectedUsers([]);
-                  loadUsers();
+                  setSearchTerm('');
+                  setUsers([]);
                 }}
                 className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                   action === 'remove' 
@@ -201,7 +242,7 @@ export default function GroupManagementModal({
             <div className="relative">
               <input
                 type="text"
-                placeholder={`Search users to ${action}...`}
+                placeholder={action === 'add' ? 'Search users by username or email...' : 'Search current members...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-3 pl-10 text-gray-950 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -211,6 +252,11 @@ export default function GroupManagementModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
+            {action === 'add' && searchTerm.length > 0 && searchTerm.length < 2 && (
+              <p className="mt-2 text-sm text-gray-500">
+                Type at least 2 characters to search users
+              </p>
+            )}
           </div>
 
           {/* Selected Users */}
@@ -272,18 +318,43 @@ export default function GroupManagementModal({
             {loading ? (
               <div className="p-6 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                <p className="mt-2 text-gray-600">Loading users...</p>
+                <p className="mt-2 text-gray-600">
+                  {action === 'add' ? 'Searching users...' : 'Loading members...'}
+                </p>
+              </div>
+            ) : action === 'add' && searchTerm.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                <div className="text-4xl mb-3">🔍</div>
+                <p className="text-lg font-medium">Search for users</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Type a username or email to find users to add to your group
+                </p>
+              </div>
+            ) : action === 'add' && searchTerm.length < 2 ? (
+              <div className="p-6 text-center text-gray-500">
+                <div className="text-4xl mb-3">⌨️</div>
+                <p className="text-lg font-medium">Keep typing...</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Type at least 2 characters to search for users
+                </p>
               </div>
             ) : users.length === 0 ? (
               <div className="p-6 text-center text-gray-500">
                 <div className="text-4xl mb-3">👥</div>
                 <p className="text-lg font-medium">No users found</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  {searchTerm ? 'Try a different search term' : `No users available to ${action}`}
+                  {action === 'add' && searchTerm ? 'No users found for "' + searchTerm + '". Try a different search term.' : 
+                   action === 'remove' ? 'No members available to remove (only the creator can be removed)' : 
+                   'No users available to ' + action}
                 </p>
               </div>
             ) : (
               <div>
+                {action === 'add' && searchTerm.length >= 2 && (
+                  <div className="px-4 py-2 text-sm text-gray-600 bg-gray-50">
+                    Found {users.length} user{users.length !== 1 ? 's' : ''} for "{searchTerm}"
+                  </div>
+                )}
                 {users.map((user) => (
                   <div
                     key={user.id}

@@ -19,40 +19,49 @@ export default function NewChatModal({ isOpen, onClose, onConversationCreated }:
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load users when modal opens
+  // Initialize modal when opened
   useEffect(() => {
     if (isOpen) {
-      loadUsers();
+      setUsers([]);
+      setSearchTerm('');
+      setError(null);
     }
   }, [isOpen]);
 
-  // Search users when search term changes
+  // Search users when search term changes (only if 2+ characters)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (searchTerm.length > 0 || searchTerm.length === 0) {
+      if (searchTerm.length >= 2) {
         loadUsers(searchTerm);
+      } else if (searchTerm.length === 0) {
+        setUsers([]);
       }
     }, 300); // Debounce search
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
-  const loadUsers = async (search?: string) => {
+  const loadUsers = async (search: string) => {
     if (!isAuthenticated) {
-      setError('Please log in to load users');
+      setError('Please log in to search users');
+      return;
+    }
+    
+    if (search.length < 2) {
+      setUsers([]);
       return;
     }
     
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading users with search:', search, 'Authenticated:', isAuthenticated);
       const data = await chatAPI.getUsers(search);
-      console.log('Users loaded:', data);
-      setUsers(data);
+      // Filter out current user
+      const filteredUsers = data.filter(u => u.id !== user?.id);
+      setUsers(filteredUsers);
     } catch (err) {
-      console.error('Error loading users:', err);
-      setError('Failed to load users');
+      console.error('Error searching users:', err);
+      setError('Failed to search users');
     } finally {
       setLoading(false);
     }
@@ -111,7 +120,7 @@ export default function NewChatModal({ isOpen, onClose, onConversationCreated }:
           <div className="relative">
             <input
               type="text"
-              placeholder="Search users by name or email..."
+              placeholder="Search users by username or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-3 pl-10 text-gray-950 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -120,6 +129,11 @@ export default function NewChatModal({ isOpen, onClose, onConversationCreated }:
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
+          {searchTerm.length > 0 && searchTerm.length < 2 && (
+            <p className="mt-2 text-sm text-gray-500">
+              Type at least 2 characters to search users
+            </p>
+          )}
         </div>
 
         {/* Error Message */}
@@ -137,18 +151,37 @@ export default function NewChatModal({ isOpen, onClose, onConversationCreated }:
           {loading ? (
             <div className="p-6 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading users...</p>
+              <p className="mt-2 text-gray-600">Searching users...</p>
+            </div>
+          ) : searchTerm.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              <div className="text-4xl mb-3">💬</div>
+              <p className="text-lg font-medium">Start a conversation</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Search for a user to start a direct message
+              </p>
+            </div>
+          ) : searchTerm.length < 2 ? (
+            <div className="p-6 text-center text-gray-500">
+              <div className="text-4xl mb-3">⌨️</div>
+              <p className="text-lg font-medium">Keep typing...</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Type at least 2 characters to search for users
+              </p>
             </div>
           ) : users.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
-              <div className="text-4xl mb-3">👥</div>
+              <div className="text-4xl mb-3">👤</div>
               <p className="text-lg font-medium">No users found</p>
               <p className="text-sm text-gray-400 mt-1">
-                {searchTerm ? 'Try a different search term' : 'No other users available'}
+                No users found for "{searchTerm}". Try a different search term.
               </p>
             </div>
           ) : (
             <div className="p-2">
+              <div className="px-4 py-2 text-sm text-gray-600 bg-gray-50">
+                Found {users.length} user{users.length !== 1 ? 's' : ''} for "{searchTerm}"
+              </div>
               {users.map((user) => (
                 <div
                   key={user.id}
