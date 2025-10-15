@@ -91,7 +91,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/astrochat.git
+   git clone https://github.com/Piyash1/Astro_Chat.git
    cd astrochat/frontend
    ```
 
@@ -243,8 +243,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
+- GitHub: [@Piyash1](https://github.com/Piyash1)
+- LinkedIn: [Moniruzzaman Piyash](https://www.linkedin.com/in/moniruzzamanpiyash/)
 
 ## 🙏 Acknowledgments
 
